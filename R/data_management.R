@@ -8,15 +8,6 @@ format_events_and_teams <- function(pbp, team.a.id) {
   
   df <- as.data.frame(pbp)
   
-  # Remove end period
-  # Remove end game
-  # Remove not available
-  # Remove official tv timeout
-  # Jumpball: the team listed under team_id in the play is the team who won posession
-  # Lost Ball Turnover: team listed is the offensive team who incurred the turnover
-  # Personal foul: the team listed committed the foul
-  # Regular & short timout: inbounds by the team calling timeout (team_id)
-  
   # Make inbound state: jumpball, timeouts
   sel.inbound <- c('Jumpball', 'RegularTimeOut', 'ShortTimeOut')
   df$type_text[df$type_text %in% sel.inbound] <- 'Inbound'
