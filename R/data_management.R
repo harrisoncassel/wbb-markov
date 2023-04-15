@@ -62,7 +62,7 @@ format_events_and_teams <- function(pbp, team.a.id) {
 select_cols <- function(df) {
   ### Returns a data.frame with only the type_text and team columns
   # df := data.frame returned by format_events_and_teams()
-  cols <- c('team_id','type_text')
+  cols <- c('team_id','type_text', 'game_id')
   df <- df[,cols]
   return(df)
 }
