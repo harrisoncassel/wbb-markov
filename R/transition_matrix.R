@@ -6,9 +6,9 @@ load.result <- tryCatch({
   }, error = function(e) {
     load2.result <- tryCatch({
       source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R')
-    } warning = function(w) {
+    }, warning = function(w) {
       print(w)
-    } error = function(e) {
+    }, error = function(e) {
       print('WARNING: data_management.R NOT LOADED! MOST FUNCTIONS WILL NOT OPERATE PROPERLY!')
       print('SPECIFIC ERROR:')
       print(e)
