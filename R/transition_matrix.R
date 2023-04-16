@@ -13,7 +13,6 @@ load.result <- tryCatch({
       print('SPECIFIC ERROR:')
       print(e)
     }
-   }
 
 states_dataframe <- function() {
   ### Returns a data.frame with the states defined for this research
