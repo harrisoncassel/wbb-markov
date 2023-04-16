@@ -12,7 +12,8 @@ load.result <- tryCatch({
       print('WARNING: data_management.R NOT LOADED! MOST FUNCTIONS WILL NOT OPERATE PROPERLY!')
       print('SPECIFIC ERROR:')
       print(e)
-    }
+    })
+  })
 
 states_dataframe <- function() {
   ### Returns a data.frame with the states defined for this research
