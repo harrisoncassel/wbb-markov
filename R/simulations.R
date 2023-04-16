@@ -1,12 +1,12 @@
 multi_sim <- function(trans.mat, n.sims=1, n.games=1000, n.steps=300) {
-  ## Returns a list of dataframes. Each dataframe is a set of outcomes
+  ### Returns a list of dataframes. Each dataframe is a set of outcomes
   # From a different "set" of simulations. Each row is the "stat line"
   # (count of state occurrences) for each simulated game.
   
   previous.state <- sample(c(6,16), 1) # initial state
   # ^ format_events_and_teams() counts a won jumpball as a team inbound, so
   # This selects one random team to "win" the beginning jumpball and have the
-  # first posession
+  # first possession
   
   df.list <- list()
   
@@ -39,11 +39,18 @@ multi_sim <- function(trans.mat, n.sims=1, n.games=1000, n.steps=300) {
 }
 
 sim_season <- function(team.a.id, year, n.steps.per.game=310, n.iter=1000, regular.season.only=TRUE) {
+  ### Returns a data.frame with simulation seasons as rows and stats (chain states) as columns
+  # team.a.id := ESPN team id of interest
+  # year := YYYY year season ends (e.g., 2022-23 season => 2023)
+  # n.steps.per.game := number of state transitions per simulated game
+  # n.iter := number of times to simulate the season
+  # regular.season.only := if TRUE, train and test *only* on regular season games
+  
   team.a.id <- as.integer(team.a.id)
   year <- as.integer(year)
   results.df <- data.frame()
   
-  # Load the PBP data
+  # Load the PBP data for team of interest (Team A)
   pbp <- load_wbb_pbp(year)
   if (regular.season.only) {
     sel.reg.season <- which(pbp$season_type==2)
