@@ -1,5 +1,20 @@
 library('wehoop')
-source('R/data_management.R')
+
+# Try to load other source file; give warning if unable
+load.result <- tryCatch({
+    source('scripts/data_management.R')
+  }, warning = function(w) {
+    return(w)
+  }, error = function(e) {
+    load2.result <- tryCatch({
+      source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R')
+    }, warning = function(w) {
+      return(w)
+    }, error = function(e) {
+      msg <- paste('WARNING: data_management.R NOT LOADED! MOST FUNCTIONS WILL NOT OPERATE PROPERLY!', 'SPECIFIC ERROR:', e, sep='\n')
+      return(msg)
+    })
+  })
 
 get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, game.season=NULL) {
   ### Returns table. Gets the actual state count (as table) for a given team (set to team a)
