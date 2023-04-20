@@ -5,7 +5,7 @@ format_events_and_teams <- function(pbp, team.a.id) {
   # pbp := data downloaded from wehoop::load_wbb_pbp()
   # team.a.id := team_id for Team A (home team or team of interest)
   # Since cleanings reduces PBP data to two teams, Team B is inferred as !A
-  print(pbp)
+
   df <- as.data.frame(pbp)
   
   # Make inbound state: jumpball, timeouts
