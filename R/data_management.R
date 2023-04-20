@@ -7,7 +7,7 @@ format_events_and_teams <- function(pbp, team.a.id) {
   # Since cleanings reduces PBP data to two teams, Team B is inferred as !A
   print(pbp)
   df <- as.data.frame(pbp)
-  print(df)
+  
   # Make inbound state: jumpball, timeouts
   sel.inbound <- c('Jumpball', 'RegularTimeOut', 'ShortTimeOut')
   df$type_text[df$type_text %in% sel.inbound] <- 'Inbound'
