@@ -65,6 +65,25 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
   return(tab)
 }
 
+eval_sim_accuracy <- function(sim.results, true.box) {
+  ### For a simulation already run, find the squared error for each stat in each trial
+  # sim.results := results from sim_season() in simulations.R
+  # true.box := result from get_true_team_box
+  true.box <- c(true.box[1,], true.box[2,])
+  result.df <- data.frame()
+  
+  n.iter <- length(sim.results[,1]) # number of sims
+  for (i in 1:n.iter) {
+    current <- sim.results[i,]
+    new <- (current - true.box) ** 2
+    result.df <- rbind(result.df, new)
+  }
+  
+  return(result.df)
+}
+
+##### Misc.
+
 test_chain_season_accuracy <- function(team.ids, seasons, n.steps.per.game=310, n.iter=1000, regular.season.only=TRUE) {
   ### Returns data.frame of squared error of each simulated season vs. reality
   ### Uses sim_season_diagnostic() from diagnostics.R
