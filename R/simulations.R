@@ -250,7 +250,8 @@ sim_season_diagnostic <- function(true.season.box, team.a.id, year, n.steps.per.
       stat.result <- multi_sim(comp.mat, n.sims=1, n.games=1, n.steps=n.steps.per.game)[[1]][2,] # stat line
       stat.line <- stat.line + stat.result
     }
-    stat.difference <- (stat.line - true.season.box)**2 # (from argument) -- find squared difference in predicted vs. actual
+    true.season.box.adjusted <- c(true.season.box[1,],true.season.box[2,])
+    stat.difference <- (stat.line - true.season.box.adjusted)**2 # (from argument) -- find squared difference in predicted vs. actual
     results.df <- rbind(results.df, stat.difference)
     
     # Status update
