@@ -33,14 +33,13 @@ format_events_and_teams <- function(pbp, team.a.id) {
   # Remove unneeded events
   sel.remove <- c('JumpShot', 'End Game', 'End Period', 'Not Available', 'OfficialTVTimeOut', 'Dead Ball Rebound', 'Steal')
   df <- df[!(df$type_text %in% sel.remove),]
-  
+  print(df)
   # Remove null events
   sel <- which(is.null(df$type_text) | is.na(df$type_text) | is.null(df$team_id) | is.na(df$team_id))
   if (length(sel) > 0) {df <- df[-sel, ]}
   
   # Remove double-counted missed/blocked shots -- these are recorded together. Block shot is more interesting.
   sel <- c()
-  print(df)
   for (i in 2:nrow(df)) {
     if (df$type_text[i] == 'Block Shot') {
       if(df$type_text[i-1] == 'Missed Shot') {
