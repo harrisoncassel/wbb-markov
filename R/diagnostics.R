@@ -19,7 +19,9 @@ load.result <- tryCatch({
 get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, game.season=NULL) {
   ### Returns table. Gets the actual state count (as table) for a given team (set to team a)
   ### for a set of seasons (or season) or a specific game.
-  # team.id := the ESPN team id for Team A (team of interest)
+  # team.id := EITHER:
+    # A) the ESPN team id for Team A (team of interest) -- IF the pbp argument is an un-cleaned pbp dataset OR using one of the other options
+    # B) for a cleaned pbp dataset
   # pbp := if passed, ignores all following arguments. A pbp to get stats from
   # seasons := an array of seasons (YYYY format, >= 2004) to get PBP data from
   # game.id := a specific game_id to get data for. This argument will be
