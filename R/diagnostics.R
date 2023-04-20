@@ -20,7 +20,7 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
   ### Returns table. Gets the actual state count (as table) for a given team (set to team a)
   ### for a set of seasons (or season) or a specific game.
     
-    ## Only confident this works when using the seasons argument at the moment (at least when using this with sim_season_diagnostic)
+    ## Only confident this works when using the seasons & pbp argument at the moment (at least when using this with sim_season_diagnostic)
     
   # team.id := EITHER:
     # A) the ESPN team id for Team A (team of interest) -- IF the pbp argument is an un-cleaned pbp dataset OR using one of the other options
@@ -33,11 +33,10 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
   
   if (!is.null(pbp)) { # Use the given pbp data -- affects team_games()
     pbp <- team_games(team.id, pbp=pbp) # from data_management.R
+      
+    unsorted.tab <- table(pbp$team_id, pbp$type_text)
     tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
-    
-    team <- table(pbp[pbp$team_id=='A', ])[tab.order]
-    opp <- table(pbp[pbp$team_id=='B', ])[tab.order]
-    tab <- c(team, opp)
+    tab <- unsorted.tab[, tab.order]
     
   } else if (!is.null(seasons)) {
     for (season in seasons) {
