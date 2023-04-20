@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.326">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Harrison Cassel">
+<meta name="dcterms.date" content="2023-04-20">
+
+<title>Simulating College Women’s Basketball</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="521project_files/libs/clipboard/clipboard.min.js"></script>
+<script src="521project_files/libs/quarto-html/quarto.js"></script>
+<script src="521project_files/libs/quarto-html/popper.min.js"></script>
+<script src="521project_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="521project_files/libs/quarto-html/anchor.min.js"></script>
+<link href="521project_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="521project_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="521project_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="521project_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="521project_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#data-collection-and-cleaning" id="toc-data-collection-and-cleaning" class="nav-link" data-scroll-target="#data-collection-and-cleaning">Data Collection and Cleaning</a></li>
+  <li><a href="#building-transition-matrices" id="toc-building-transition-matrices" class="nav-link" data-scroll-target="#building-transition-matrices">Building Transition Matrices</a></li>
+  <li><a href="#running-simulations" id="toc-running-simulations" class="nav-link" data-scroll-target="#running-simulations">Running Simulations</a></li>
+  <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">Diagnostics</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Simulating College Women’s Basketball</h1>
+<p class="subtitle lead">A novel application of the Markov Chain stochastic model.</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Harrison Cassel </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 20, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>There is a notable lack of sports analytics research into women’s basketball (WBB) in general, which is relatively unsurprising, given the novelty of advanced sports analytics and the historical inequity between the men’s and women’s renditions of the sport. Most interesting to me is the fact that <em>no one</em> in the relevant journals appears to have applied the discrete Markov Chain model to NCAA DI Women’s Basketball. For this reason, I have adopted a scaled-up version of this project as my undergraduate thesis topic and, correspondingly, created the following summary of my identified research gap (<em>Table 1</em>). This report will discuss the data collection/cleaning, transition matrix-building, and basic season simulation/diagnostics R programs (<a href="https://www.github.com/harrisoncassel/wbb-markov">GitHub</a>) I have developed to conduct my research, as well as an early-stage case-study using my proposed model.</p>
+<table class="table">
+<caption><strong>Table 1.</strong> <em>Literature review search results, by search location.</em></caption>
+<colgroup>
+<col style="width: 21%">
+<col style="width: 15%">
+<col style="width: 9%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Search location</th>
+<th>Search query (or queries)</th>
+<th># of relevant results</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Google Scholar</td>
+<td><p>“ncaa womens basketball markov”</p>
+<p>“ncaa womens basketball monte carlo”</p></td>
+<td>0</td>
+<td><p>Located articles relevant to WBB but none applying Markov Chains.</p>
+<p>Returned <em>very few</em> (three or so) articles applying similar methods to men’s basketball.</p></td>
+</tr>
+<tr class="even">
+<td>JSTOR</td>
+<td>“ncaa womens basketball markov”</td>
+<td>0</td>
+<td>Oddly enough, the <em>second</em> result was titled “Monte Carlo Tennis.”</td>
+</tr>
+<tr class="odd">
+<td>EBSCOhost</td>
+<td>“basketball” AND “markov” AND “women”</td>
+<td>0</td>
+<td>Returned various news articles about the Olympic Games.</td>
+</tr>
+<tr class="even">
+<td>IOS Press Content Library</td>
+<td>“ncaa womens basketball markov”</td>
+<td>0</td>
+<td>Similar to JSTOR, the second result discussed NCAA water polo performance analytics.</td>
+</tr>
+<tr class="odd">
+<td>SIAM Publications Library</td>
+<td>“ncaa womens basketball markov”</td>
+<td>0</td>
+<td>One result: the same tennis article returned by JTSOR.</td>
+</tr>
+<tr class="even">
+<td>De Gruyter</td>
+<td>“ncaa womens basketball markov”</td>
+<td>0</td>
+<td>Two results. The first applied this methodology to NCAA women’s soccer. The second was another men’s basketball article.</td>
+</tr>
+<tr class="odd">
+<td>The American Statistician (via Taylor &amp; Francis Online)</td>
+<td>“basketball markov”</td>
+<td>0</td>
+<td>Only about four results, none of which use the word “women” in their abstracts. For this research, the articles are of dubious relevance.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-collection-and-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="data-collection-and-cleaning">Data Collection and Cleaning</h2>
+<p>I opted to use the <a href="https://wehoop.sportsdataverse.org/">wehoop</a> library from the <a href="https://sportsdataverse.org/">sportsdataverse</a>, created by <a href="https://twitter.com/saiemgilani">Saiem Gilani</a> and <a href="https://twitter.com/hutchngo">Geoff Hutchinson</a>. This library offers convenient access to ESPN’s vast database of play-by-play data. Besides the benefit of convenience, one of this library’s best features is just <em>how clean</em> the data comes out. Wehoop includes a function to gather play-by-play data for every game in a given DI WBB season (e.g., 2022-23, 2021-22, etc.). It returns massive R data-frames (’22-’23, for example, is 500k+ rows) that would be difficult to manage all at once, but this seasonal design makes segmenting data management tasks natural and easy. Not using the built-in convenience would require an impressive CPU/RAM setup, which my poor laptop learned the hard way. Thus, my <a href="https://github.com/harrisoncassel/wbb-markov/blob/main/R/data_management.R"><em>data_management.R</em></a> functions, generally speaking, aggregate and clean data iteratively over the season(s) of interest.</p>
+<p>My proposed state space represents a greatly-simplified version of basketball, but it still captures the overall movement of the game, along with select nuances that I expect will contribute to an interesting final analysis. My <a href="https://github.com/harrisoncassel/wbb-markov/blob/main/R/transition_matrix.R"><em>transition_matrix.R</em></a> script includes a function to print the final state space:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hidden: use source() to load transition_matrix.R</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Print state names and ID numbers</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">states_dataframe</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    A  B
+MadeFreeThrow       1 11
+TwoPoint            2 12
+ThreePoint          3 13
+Missed Shot         4 14
+Offensive Rebound   5 15
+Lost Ball Turnover  6 16
+Inbound             7 17
+Foul                8 18
+Defensive Rebound   9 19
+Block Shot         10 20</code></pre>
+</div>
+</div>
+<p>The table above gives the proposed state space. <strong>Team A</strong> is the “team of interest.” For example, in an analysis of the South Carolina Gamecocks, the Gamecocks would be “Team A,” while their opponents would collectively be <strong>Team B</strong>. Another interpretation of this designation could be home/away, but such an analysis is outside of the scope of this report. It may be an area of future research, however, since studies of this and other sports have identified a significant “home team advantage” effect.</p>
+<p>These states were derived from the initial event types in the data, as follows:</p>
+<table class="table">
+<caption><strong>Table 2.</strong> <em>Creation of the state space.</em></caption>
+<colgroup>
+<col style="width: 35%">
+<col style="width: 64%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Original Event(s)</th>
+<th>State Space Event</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Made shot worth one point</td>
+<td>MadeFreeThrow</td>
+</tr>
+<tr class="even">
+<td>Made shot worth two points</td>
+<td>TwoPoint</td>
+</tr>
+<tr class="odd">
+<td>Made shot worth three points</td>
+<td>ThreePoint</td>
+</tr>
+<tr class="even">
+<td>Missed shot that <em>would have been</em> worth two or three points</td>
+<td>MissedShot - <em>Blocked shots are also recorded as missed shots, so recorded blocks have their corresponding missed shot event deleted</em>.</td>
+</tr>
+<tr class="odd">
+<td>Offensive rebound</td>
+<td>Offensive Rebound</td>
+</tr>
+<tr class="even">
+<td>Lost Ball Turnover</td>
+<td>Lost Ball Turnover</td>
+</tr>
+<tr class="odd">
+<td>Jumpball, timeout</td>
+<td>Inbound</td>
+</tr>
+<tr class="even">
+<td>Personal/technical foul</td>
+<td>Foul</td>
+</tr>
+<tr class="odd">
+<td>Defensive rebound</td>
+<td>Defensive Rebound</td>
+</tr>
+<tr class="even">
+<td>Block shot</td>
+<td>Block Shot</td>
+</tr>
+<tr class="odd">
+<td>End of game/period, TV timeout, N/A, dead ball rebound, steal (turnover)</td>
+<td><em>Removed from data set</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="building-transition-matrices" class="level2">
+<h2 class="anchored" data-anchor-id="building-transition-matrices">Building Transition Matrices</h2>
+<p>I adopted an iterative process for generating Markov Chain models fitted to particular teams, seasons, and competitions. My <em>transition_matrix.R</em> function, <em>update_transition_matrix()</em>, takes the processed data-frame from <em>data_management.R</em>’s <em>team_games()</em> function. Then, it goes play-by-play through each game, making note of each state transition and returning a transition matrix of transition counts (<em>not</em> probabilities). This frequency-based approach allows for the iterative addition of game and/or season data to a given model. When all of the relevant counts are calculated, the data management function, <em>make_transition_probs()</em>, can be called to convert the frequencies to probabilities, thus creating a true Markov Chain, with row probabilities adding to one.</p>
+<p>I previously discussed the Team A/B labeling strategy adopted in the data cleaning phase to facilitate faster and more convenient data management. Of course, the simulated outcomes of specific games (i.e., between two specific teams) are of great interest to the sports analyst, making “comparison matrices” an integral aspect of this project. Thankfully, the A/B strategy has a lovely extension, here! Since a given team’s model considers its team as <em>A</em> and every other team as <em>B</em>, creating a comparison matrix simply requires placing one team’s transition probabilities in <em>section A</em> (states 1-10) of a new transition matrix, and another team’s in <em>section B</em> (states 11-20). This can be accomplished using the <em>create_comparison_matrix()</em> function in <em>transition_matrix.R</em>.</p>
+<p>The process of fitting a Markov Chain model for the 2022-23 South Carolina Gamecock is presented below. This code returns the fitted transition matrix for South Carolina’s 2022-23 season. Please note: <em>only 1/4 of the South Carolina matrix is shown, since the entire 20x20 matrix takes up an entire page.</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hidden: use source() to load data_management.R</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the play-by-play data for the '22-'23 Gamecocks (ESPN team ID 2579)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>gamecocks.pbp <span class="ot">&lt;-</span> <span class="fu">team_games</span>(<span class="at">team.id=</span><span class="dv">2579</span>, <span class="at">seasons=</span><span class="dv">2023</span>) <span class="co"># data_management.R</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create empty transition matrix, &amp; update the counts</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>trans.mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">data=</span><span class="dv">0</span>, <span class="at">nrow=</span><span class="dv">20</span>, <span class="at">ncol=</span><span class="dv">20</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>trans.mat <span class="ot">&lt;-</span> <span class="fu">update_transition_matrix</span>(trans.mat, gamecocks.pbp) <span class="co"># transition_matrix.R</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert trans.mat frequencies to probabilities, &amp; print</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>trans.mat <span class="ot">&lt;-</span> <span class="fu">make_transition_probs</span>(trans.mat) <span class="co"># transition_matrix.R</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>trans.mat <span class="ot">&lt;-</span> <span class="fu">round</span>(trans.mat, <span class="dv">2</span>) <span class="co"># &lt;- to make more readable</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(trans.mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+ [1,] 0.31 0.00 0.00 0.01 0.04 0.01 0.01 0.08 0.00  0.07
+ [2,] 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.09 0.00  0.08
+ [3,] 0.00 0.01 0.00 0.01 0.00 0.00 0.01 0.12 0.00  0.04
+ [4,] 0.00 0.00 0.00 0.00 0.48 0.00 0.00 0.01 0.00  0.00
+ [5,] 0.00 0.34 0.02 0.30 0.00 0.06 0.02 0.01 0.00  0.00
+ [6,] 0.00 0.00 0.00 0.00 0.00 0.00 0.01 0.10 0.00  0.10
+ [7,] 0.00 0.26 0.03 0.28 0.00 0.15 0.01 0.04 0.00  0.00
+ [8,] 0.00 0.00 0.00 0.00 0.00 0.14 0.00 0.04 0.05  0.04
+ [9,] 0.00 0.24 0.05 0.31 0.00 0.12 0.03 0.03 0.00  0.01
+[10,] 0.00 0.02 0.00 0.01 0.00 0.01 0.00 0.01 0.54  0.00</code></pre>
+</div>
+</div>
+</section>
+<section id="running-simulations" class="level2">
+<h2 class="anchored" data-anchor-id="running-simulations">Running Simulations</h2>
+<p>Having created the methods necessary to collect data and transform it into team-specific transitions matrices, the process of simulating individual games is relatively easy. Here, I again consider the most recent Gamecocks team and construct simulated season statistics to be compared to the ground truth team stat-line available on the team’s website (see <strong>Diagnostics</strong>). Since this will be an <em>apples-to-apples</em> comparison, a simulated result that closely matches reality should indicate that this is an appropriately-designed model.</p>
+<p><em>sim_season()</em> is a function in <a href="https://github.com/harrisoncassel/wbb-markov/blob/main/R/simulations.R"><em>simulations.R</em></a> uses regular season data to fit transition matrices for a team of interest (the Gamecocks, in this case), as well as for all of the team’s opponents. Then, using the “stacking” method of comparison matrix construction, it simulates the team of interest’s season, recording the stat line (states’ occurrence counts) for each game.</p>
+<p>The mean number of state transitions per game is in the neighborhood of 300, and I found that <em>310 steps/game</em> produces the most consistently realistic results. The season is simulated 250 times because the data downloading/cleaning requirements, as well as the large number of state transitions (310 steps * ~31 games * 250 iterations = 2.4M transitions).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hiddden: use source() to load simulations.R</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>gamecocks.espn.id <span class="ot">&lt;-</span> <span class="dv">2579</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sim.results <span class="ot">&lt;-</span> <span class="fu">sim_season</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">team.a.id =</span> gamecocks.espn.id,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2023</span>, <span class="co"># 22-23 season</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">n.steps.per.game =</span> <span class="dv">310</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">n.iter =</span> <span class="dv">250</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sim.results)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      A-FT           A-2pt           A-3pt         A-MissShot       A-OREB     
+ Min.   :320.0   Min.   :739.0   Min.   :130.0   Min.   : 956   Min.   :555.0  
+ 1st Qu.:374.0   1st Qu.:806.2   1st Qu.:154.0   1st Qu.:1029   1st Qu.:618.0  
+ Median :394.0   Median :821.0   Median :163.5   Median :1044   Median :634.0  
+ Mean   :392.6   Mean   :820.7   Mean   :163.4   Mean   :1045   Mean   :632.7  
+ 3rd Qu.:410.0   3rd Qu.:836.0   3rd Qu.:173.0   3rd Qu.:1062   3rd Qu.:649.0  
+ Max.   :467.0   Max.   :901.0   Max.   :200.0   Max.   :1124   Max.   :702.0  
+      A-TO         A-Inbound         A-Foul          A-DREB     
+ Min.   :438.0   Min.   : 91.0   Min.   :485.0   Min.   :845.0  
+ 1st Qu.:491.2   1st Qu.:106.2   1st Qu.:531.2   1st Qu.:905.2  
+ Median :505.0   Median :113.0   Median :547.0   Median :919.5  
+ Mean   :504.7   Mean   :114.0   Mean   :547.2   Mean   :920.9  
+ 3rd Qu.:520.0   3rd Qu.:121.0   3rd Qu.:559.0   3rd Qu.:937.0  
+ Max.   :578.0   Max.   :155.0   Max.   :614.0   Max.   :984.0  
+    A-Block           B-FT           B-2pt           B-3pt         B-MissShot  
+ Min.   :191.0   Min.   :328.0   Min.   :452.0   Min.   :120.0   Min.   : 994  
+ 1st Qu.:222.0   1st Qu.:383.2   1st Qu.:501.2   1st Qu.:142.0   1st Qu.:1047  
+ Median :232.0   Median :400.0   Median :515.5   Median :148.5   Median :1065  
+ Mean   :233.2   Mean   :401.3   Mean   :514.9   Mean   :149.6   Mean   :1064  
+ 3rd Qu.:244.8   3rd Qu.:419.0   3rd Qu.:529.0   3rd Qu.:157.0   3rd Qu.:1085  
+ Max.   :276.0   Max.   :480.0   Max.   :562.0   Max.   :193.0   Max.   :1128  
+     B-OREB           B-TO         B-Inbound         B-Foul     
+ Min.   :385.0   Min.   :453.0   Min.   : 85.0   Min.   :572.0  
+ 1st Qu.:426.2   1st Qu.:495.0   1st Qu.:110.0   1st Qu.:613.0  
+ Median :442.0   Median :510.5   Median :116.0   Median :628.0  
+ Mean   :440.8   Mean   :512.3   Mean   :116.5   Mean   :628.8  
+ 3rd Qu.:454.8   3rd Qu.:528.8   3rd Qu.:124.0   3rd Qu.:644.0  
+ Max.   :503.0   Max.   :568.0   Max.   :147.0   Max.   :687.0  
+     B-DREB         B-Block           Wins      
+ Min.   :573.0   Min.   : 99.0   Min.   :24.00  
+ 1st Qu.:609.0   1st Qu.:119.0   1st Qu.:29.00  
+ Median :623.0   Median :125.0   Median :30.00  
+ Mean   :622.9   Mean   :125.9   Mean   :29.46  
+ 3rd Qu.:636.0   3rd Qu.:133.8   3rd Qu.:31.00  
+ Max.   :674.0   Max.   :161.0   Max.   :32.00  </code></pre>
+</div>
+</div>
+</section>
+<section id="diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="diagnostics">Diagnostics</h2>
+<p>How do these simulations compare to reality?</p>
+<p><a href="https://github.com/harrisoncassel/wbb-markov/blob/main/R/diagnostics.R"><em>Diagnostics.R</em></a> includes a function for returning <em>true</em> season box score (which shows various aggregate team statistics) for any given team. A good place to start in assessing this model’s ability to “play” basketball is by comparing the average outcomes above to the 2022-23 Gamecocks’ actual performance.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Hiddden: use source() to load diagnostics.R</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>true.box <span class="ot">&lt;-</span> <span class="fu">get_true_team_box</span>(<span class="dv">2579</span>, <span class="at">seasons=</span><span class="fu">c</span>(<span class="dv">2023</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(true.box)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   
+    MadeFreeThrow TwoPoint ThreePoint Missed Shot Offensive Rebound
+  A           569      955        163        1158               683
+  B           353      543        154        1165               370
+   
+    Lost Ball Turnover Inbound Foul Defensive Rebound Block Shot
+  A                468     133  543              1154        326
+  B                514     167  737               713        146</code></pre>
+</div>
+</div>
+<p>It seems that the Markov Chain got at least somewhat close, but a more meaningful approach to assessing the accuracy of this model would be to look at the distribution of its errors. Below, I first use <em>eval_sim_accuracy()</em> from <em>diagnostics.R</em> to loop through each simulated season and record the squared distance of each variable from the truth (squared error). I then find what is effectively the coefficient of variation: <span class="math inline">\(\frac{\sqrt{error^2}}{truth}\)</span> for each variable of each simulation. Looking at the summary statistics for the collection of coefficients should offer good insight into the model’s capability.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">eval_sim_accuracy</span>(sim.results[,<span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>], true.box)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sqrt.results <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(results)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>coeffs.var <span class="ot">&lt;-</span> <span class="fu">round</span>(sqrt.results <span class="sc">/</span> <span class="fu">c</span>(true.box[<span class="dv">1</span>,], true.box[<span class="dv">2</span>,]), <span class="dv">2</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(coeffs.var)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      A-FT            A-2pt            A-3pt           A-MissShot    
+ Min.   :0.0900   Min.   :0.0500   Min.   :0.00000   Min.   :0.0500  
+ 1st Qu.:0.2300   1st Qu.:0.1700   1st Qu.:0.01000   1st Qu.:0.1500  
+ Median :0.3500   Median :0.2700   Median :0.02000   Median :0.2200  
+ Mean   :0.5207   Mean   :0.4059   Mean   :0.03048   Mean   :0.3264  
+ 3rd Qu.:0.7150   3rd Qu.:0.5400   3rd Qu.:0.04000   3rd Qu.:0.4450  
+ Max.   :1.6200   Max.   :1.5700   Max.   :0.22000   Max.   :1.2200  
+     A-OREB            A-TO          A-Inbound           A-Foul       
+ Min.   :0.0000   Min.   :0.0000   Min.   :0.00000   Min.   :0.00000  
+ 1st Qu.:0.0600   1st Qu.:0.0400   1st Qu.:0.02000   1st Qu.:0.01000  
+ Median :0.1000   Median :0.0800   Median :0.04000   Median :0.03000  
+ Mean   :0.1452   Mean   :0.1096   Mean   :0.05912   Mean   :0.05536  
+ 3rd Qu.:0.1875   3rd Qu.:0.1500   3rd Qu.:0.08000   3rd Qu.:0.06000  
+ Max.   :0.8800   Max.   :0.5100   Max.   :0.32000   Max.   :0.44000  
+     A-DREB          A-Block            B-FT            B-2pt       
+ Min.   :0.1600   Min.   :0.0500   Min.   :0.0000   Min.   :0.0000  
+ 1st Qu.:0.3100   1st Qu.:0.1125   1st Qu.:0.0500   1st Qu.:0.0300  
+ Median :0.4550   Median :0.1800   Median :0.0900   Median :0.0600  
+ Mean   :0.6886   Mean   :0.2781   Mean   :0.1438   Mean   :0.0836  
+ 3rd Qu.:0.8275   3rd Qu.:0.3875   3rd Qu.:0.1800   3rd Qu.:0.1000  
+ Max.   :2.1200   Max.   :0.9200   Max.   :0.7500   Max.   :0.5700  
+     B-3pt           B-MissShot         B-OREB            B-TO        
+ Min.   :0.00000   Min.   :0.0400   Min.   :0.0200   Min.   :0.00000  
+ 1st Qu.:0.01000   1st Qu.:0.1200   1st Qu.:0.0900   1st Qu.:0.02000  
+ Median :0.02000   Median :0.1900   Median :0.1450   Median :0.03000  
+ Mean   :0.02908   Mean   :0.3024   Mean   :0.2053   Mean   :0.05384  
+ 3rd Qu.:0.04000   3rd Qu.:0.4175   3rd Qu.:0.2575   3rd Qu.:0.07000  
+ Max.   :0.18000   Max.   :1.1000   Max.   :0.7300   Max.   :0.34000  
+   B-Inbound          B-Foul           B-DREB          B-Block    
+ Min.   :0.0200   Min.   :0.0600   Min.   :0.0400   Min.   :0.00  
+ 1st Qu.:0.0600   1st Qu.:0.1400   1st Qu.:0.1100   1st Qu.:0.02  
+ Median :0.1000   Median :0.2100   Median :0.1800   Median :0.04  
+ Mean   :0.1494   Mean   :0.3208   Mean   :0.2602   Mean   :0.06  
+ 3rd Qu.:0.1900   3rd Qu.:0.4000   3rd Qu.:0.3275   3rd Qu.:0.08  
+ Max.   :0.5300   Max.   :1.2400   Max.   :1.0000   Max.   :0.33  </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">20</span>) {</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  current <span class="ot">&lt;-</span> coeffs.var[,i]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  current.name <span class="ot">&lt;-</span> <span class="fu">names</span>(coeffs.var)[i]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hist</span>(current, <span class="at">xlab=</span><span class="st">'Coefficient of Variation'</span>, <span class="at">main=</span><span class="fu">paste</span>(<span class="st">'Histogram of'</span>,current.name))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="521project_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="521project_files/figure-html/unnamed-chunk-13-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="521project_files/figure-html/unnamed-chunk-13-3.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Create simulated matrix using the simulation.R funcs. Then, discuss diagnostics.R, it’s funcs, and apply them to compare ground truth SC to simulated SC. Think it best to consider the simulation of SC vs.&nbsp;an opponent (perhaps Iowa or LSU). Could identify what in the game looked different than the sim expected. Could also look at long-run transition probabilities for the matchup to identify each teams’ relative advantages. Could compare these to reality to see if certain things were shut down, allowed to thrive, or if other things were missed by the model.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
