@@ -178,8 +178,7 @@ sim_season <- function(team.a.id, year, n.steps.per.game=310, n.iter=1000, regul
   names(results.df) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB',
                          'A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block',
                          'B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB',
-                         'B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block',
-                         'Wins')
+                         'B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block')
   return(results.df)
 }
 
