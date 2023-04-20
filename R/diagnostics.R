@@ -19,6 +19,9 @@ load.result <- tryCatch({
 get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, game.season=NULL) {
   ### Returns table. Gets the actual state count (as table) for a given team (set to team a)
   ### for a set of seasons (or season) or a specific game.
+    
+    ## Only confident this works when using the seasons argument at the moment (at least when using this with sim_season_diagnostic)
+    
   # team.id := EITHER:
     # A) the ESPN team id for Team A (team of interest) -- IF the pbp argument is an un-cleaned pbp dataset OR using one of the other options
     # B) for a cleaned pbp dataset
@@ -36,14 +39,13 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
     opp <- table(pbp[pbp$team_id=='B', ])[tab.order]
     tab <- c(team, opp)
     
-  } else if (!is.null(seasons)) { # Load new pbp data -- affects team_games()
+  } else if (!is.null(seasons)) {
     for (season in seasons) {
-      pbp <- team_games(team.id, seasons=season) # from data_management.R
-      tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
+      pbp <- team_games(team.id, seasons=season)
       
-      team <- table(pbp[pbp$team_id=='A', ])[tab.order]
-      opp <- table(pbp[pbp$team_id=='B', ])[tab.order]
-      tab <- c(team, opp)
+      tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
+      unsorted.tab <- table(pbp$team_id, pbp$type_text)
+      tab <- unsorted.tab[, tab.order]
     }
   } else { # this is the specific-game case. Load new pbp, then filter by game_id
     pbp <- as.data.frame(load_wbb_pbp(game.season))
