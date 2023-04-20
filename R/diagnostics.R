@@ -56,6 +56,10 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
     tab <- c(team, opp)
   }
   
+  names(tab) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB',
+                         'A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block',
+                         'B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB',
+                         'B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block')
   return(tab)
 }
 
