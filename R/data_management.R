@@ -5,7 +5,7 @@ format_events_and_teams <- function(pbp, team.a.id) {
   # pbp := data downloaded from wehoop::load_wbb_pbp()
   # team.a.id := team_id for Team A (home team or team of interest)
   # Since cleanings reduces PBP data to two teams, Team B is inferred as !A
-  
+
   df <- as.data.frame(pbp)
   
   # Make inbound state: jumpball, timeouts
@@ -33,7 +33,7 @@ format_events_and_teams <- function(pbp, team.a.id) {
   # Remove unneeded events
   sel.remove <- c('JumpShot', 'End Game', 'End Period', 'Not Available', 'OfficialTVTimeOut', 'Dead Ball Rebound', 'Steal')
   df <- df[!(df$type_text %in% sel.remove),]
-  
+ 
   # Remove null events
   sel <- which(is.null(df$type_text) | is.na(df$type_text) | is.null(df$team_id) | is.na(df$team_id))
   if (length(sel) > 0) {df <- df[-sel, ]}

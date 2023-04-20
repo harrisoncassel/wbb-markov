@@ -19,7 +19,12 @@ load.result <- tryCatch({
 get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, game.season=NULL) {
   ### Returns table. Gets the actual state count (as table) for a given team (set to team a)
   ### for a set of seasons (or season) or a specific game.
-  # team.id := the ESPN team id for Team A (team of interest)
+    
+    ## Only confident this works when using the seasons & pbp argument at the moment (at least when using this with sim_season_diagnostic)
+    
+  # team.id := EITHER:
+    # A) the ESPN team id for Team A (team of interest) -- IF the pbp argument is an un-cleaned pbp dataset OR using one of the other options
+    # B) for a cleaned pbp dataset
   # pbp := if passed, ignores all following arguments. A pbp to get stats from
   # seasons := an array of seasons (YYYY format, >= 2004) to get PBP data from
   # game.id := a specific game_id to get data for. This argument will be
@@ -28,20 +33,18 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
   
   if (!is.null(pbp)) { # Use the given pbp data -- affects team_games()
     pbp <- team_games(team.id, pbp=pbp) # from data_management.R
-    tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
-    
-    team <- table(pbp[pbp$team_id=='A', ])[tab.order]
-    opp <- table(pbp[pbp$team_id=='B', ])[tab.order]
-    tab <- c(team, opp)
-    
-  } else if (!is.null(seasons)) { # Load new pbp data -- affects team_games()
-    for (season in seasons) {
-      pbp <- team_games(team.id, seasons=season) # from data_management.R
-      tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
       
-      team <- table(pbp[pbp$team_id=='A', ])[tab.order]
-      opp <- table(pbp[pbp$team_id=='B', ])[tab.order]
-      tab <- c(team, opp)
+    unsorted.tab <- table(pbp$team_id, pbp$type_text)
+    tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
+    tab <- unsorted.tab[, tab.order]
+    
+  } else if (!is.null(seasons)) {
+    for (season in seasons) {
+      pbp <- team_games(team.id, seasons=season)
+      
+      tab.order <- c(6, 10, 9, 7, 8, 5, 4, 3, 2, 1)
+      unsorted.tab <- table(pbp$team_id, pbp$type_text)
+      tab <- unsorted.tab[, tab.order]
     }
   } else { # this is the specific-game case. Load new pbp, then filter by game_id
     pbp <- as.data.frame(load_wbb_pbp(game.season))
@@ -54,8 +57,31 @@ get_true_team_box <- function(team.id, pbp=NULL, seasons=NULL, game.id=NULL, gam
     tab <- c(team, opp)
   }
   
+  names(tab) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB',
+                         'A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block',
+                         'B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB',
+                         'B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block')
   return(tab)
 }
+
+eval_sim_accuracy <- function(sim.results, true.box) {
+  ### For a simulation already run, find the squared error for each stat in each trial
+  # sim.results := results from sim_season() in simulations.R
+  # true.box := result from get_true_team_box
+  true.box <- c(true.box[1,], true.box[2,])
+  result.df <- data.frame()
+  
+  n.iter <- length(sim.results[,1]) # number of sims
+  for (i in 1:n.iter) {
+    current <- sim.results[i,]
+    new <- (current - true.box) ** 2
+    result.df <- rbind(result.df, new)
+  }
+  
+  return(result.df)
+}
+
+##### Misc.
 
 test_chain_season_accuracy <- function(team.ids, seasons, n.steps.per.game=310, n.iter=1000, regular.season.only=TRUE) {
   ### Returns data.frame of squared error of each simulated season vs. reality
