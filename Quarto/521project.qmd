@@ -48,7 +48,7 @@ My proposed state space represents a greatly-simplified version of basketball, b
 ```{r}
 #| echo: false
 
-source("https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/transition_matrix.R")
+source("https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/transition_matrix.R?token=GHSAT0AAAAAACAJ3F4DJGRZJANEN3TPWQJEZCB2E4Q")
 ```
 
 ```{r}
@@ -102,12 +102,12 @@ The process of fitting a Markov Chain model for the 2022-23 South Carolina Gamec
 #| warning: false
 
 # Load data_management.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ')
 
 # Load a saved version of the 22-23 Gamecocks pbp to make rendering faster
 # Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
-gamecocks.pbp <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/gamecocks_23_pbp.rds")))
-trans.mat <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/trans_mat.rds")))
+#gamecocks.pbp <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/blob/cab0596ca63af0582bd0135362bcda1f3205c793/R/helper_data/gamecocks_23_pbp.rds?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ")))
+#trans.mat <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/trans_mat.rds?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ")))
 ```
 
 ```{r}
@@ -144,11 +144,11 @@ The mean number of state transitions per game is in the neighborhood of 300, and
 #| echo: false
 
 # source simulations.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/simulations.R')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/simulations.R?token=GHSAT0AAAAAACAJ3F4CC2G7557CGOPEDPWOZCB2MSA')
 
 # sim.results takes a very long time to calculate, so I saved some results to a .rds file to allow this .qmd to render quickly
 # Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
-sim.results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/sim_results.rds")))
+#sim.results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/sim_results.rds")))
 ```
 
 ```{r}
@@ -179,10 +179,10 @@ How do these simulations compare to reality?
 #| echo: false
 
 # Load diagnostics.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/diagnostics.R')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/diagnostics.R?token=GHSAT0AAAAAACAJ3F4CRI7F3B2MEB5QX3ACZCB2NEA')
 
 # Load true box to make rendering faster
-true.box <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/true_box.rds")))
+#true.box <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/true_box.rds")))
 ```
 
 ```{r}
@@ -206,22 +206,23 @@ coeffs.var <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
 summary(coeffs.var)
 ```
 
-Clearly, this model exhibits a strong ability to accurately simulate Gamecocks basketball, at least in this most recent season! I am surprised that the "defensive" (Team B) predictions are so accurate. Determining exactly why this is something I would like further into look into going forward, but my current hypothesis is that this pattern may be due to South Carolina's unusually dominant defensive skills. The team's variable schedule is likely deleterious to the offensive predictions, as well. Their first game was at home against East Tennessee State University (ETSU), and they won by 70 points. Contrast that with their results against more equitable opponents: against Tennessee on February 23, the final was 73-60 in favor of the Gamecocks, a very different game, indeed (all score data from ESPN).
+Clearly, this model exhibits a strong ability to accurately simulate Gamecocks basketball, at least in this most recent season! The "defensive" (Team B) predictions are impressively accurate. This is what we expected, and it confirms that this is an effective model for simulating the 2022-23 Gamecocks. Its predictions matched the reality on which it was trained.
 
-The same coefficients of variation diagnostics for a far less dominant (yet still comparable) team, Texas A&M (season record: 9-20), are below. The squared errors can be found using the *test_chain_season_accuracy()* function in *diagnostics.R*, which simulates a season and returns the squared errors. It is essentially the *eval_sim_accuracy()* function above, except it includes the simulating.
+Below are the coefficient of variation results for another dominant team, the Iowa Hawkeyes, using a function that packages a few of the sections above into one. They are certainly less impressive than those
 
 ```{r}
 #| echo: false
 
 # Load sq.err to make rendering faster
 coeffs.var2 <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/true_box.rds")))
+coeffs.var2 <- coeffs.var2[,1:20]
 ```
 
 ```{r}
 #| eval: false
 
-true.box <- get_true_team_box(245, seasons=c(2023))
-sq.err <- test_chain_season_accuracy(245, 2023, n.iter=250)
+true.box <- get_true_team_box(2294, seasons=c(2023))
+sq.err <- test_chain_season_accuracy(2294, 2023, n.iter=250)
 sqrt.results <- sqrt(sq.err)
 coeffs.var2 <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
 saveRDS(coeffs.var2, 'coeffs_var2.rds')
@@ -233,7 +234,39 @@ summary(coeffs.var2)
 
 ## A Brief Application
 
-This season, the Gamecocks had their dreams of back-to-back national championships crushed by an all-star performance from CaitlinClark and her Iowa Hawkeyes. Even the odds-makers were shocked by this, having listed the Gamecocks as 11 points favorites (source: [CBS](https://www.cbssports.com/womens-college-basketball/news/south-carolina-vs-iowa-prediction-odds-line-time-2023-womens-final-four-picks-best-bets-by-top-experts/))! Using this model, I can estimate how unlikely (or, perhaps, likely) this upset was. More specifically, I can attempt to identify game statistics with unexpected values. These may be indicators of (un)successful players and strategies.
+This season, the Gamecocks had their dreams of back-to-back national championships crushed by an all-star performance from Caitlin Clark and her Iowa Hawkeyes. Even the odds-makers were shocked by this, having listed the Gamecocks as 11 points favorites (source: [CBS](https://www.cbssports.com/womens-college-basketball/news/south-carolina-vs-iowa-prediction-odds-line-time-2023-womens-final-four-picks-best-bets-by-top-experts/))! Using this model, I can estimate how unlikely (or, perhaps, likely) this upset was. More specifically, I can attempt to identify game statistics with unexpected values. These may be indicators of (un)successful players and strategies.
+
+By creating a "comparison matrix" with the *create_comparison_matrix()* function in *transition_matrix.R(),* I can simulate the matchup many times and ascertain *some idea* of how likely Iowa's win might have been. It is also worth noting that these models were trained using only regular season data, and there is nothing built-in to account for the various factors that may help or harm a team in the Final Four. The previous section did show the teams' respective models to be effective, however. This fact lends some validity to my results.
+
+```{r}
+ia.pbp <- team_games(2294, seasons=2023)
+ia.trans.mat <- update_transition_matrix(matrix(data=0,nrow=20,ncol=20), ia.pbp)
+
+sc.ia <- create_comparison_matrix(trans.mat, ia.trans.mat)
+
+results <- multi_sim(sc.ia, n.games=500, n.steps=310)[[1]]
+names(results) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB','A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block','B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB','B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block','A-Win')
+summary(results)
+
+actual.outcome <- get_true_team_box(2579, game.id=401528027, game.season=2023)
+results.means <- colMeans(results, na.rm=TRUE)
+results.diff <- actual.outcome - results.means[1:20]
+print(results.diff)
+
+results.cv <- results.diff[1:20] / actual.outcome
+print(results.cv)
+
+saveRDS(results.cv, 'results_cv.rds')
+
+saveRDS(results.diff, 'comparison_diff.rds')
+
+saveRDS(results, 'comparison_results.rds')
+
+```
+
+As before, I find the coefficient of variation-type metric to be the most helpful. Negative values indicate that the the real teams under-performed, relative to the model, and positive values, naturally, indicate a better performance than expected.
+
+This comparison suggests that the Hawkeyes were able to effectively shutdown the Gamecocks' 3-point shooting, while over-performing in terms of scoring. Even at the free-throw line, free of defenders, the Gamecocks struggled, scoring fewer points than expected. A look at the game's box score on ESPN confirms these hypotheses to an extent. At the end of the day, it seems like Iowa, propelled by Clark's historic [40-point triple-double](https://www.espn.com/womens-college-basketball/recap/_/gameId/401528027), simply found a way to control almost every aspect of South Carolina's game.
 
 ## Appendix: Coefficients of Variation Plots
 
