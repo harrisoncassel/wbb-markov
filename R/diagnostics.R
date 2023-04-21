@@ -2,7 +2,7 @@ library('wehoop')
 
 # Try to load other source file; give warning if unable
 load.result <- tryCatch({
-    source('scripts/data_management.R')
+    source('data_management.R')
   }, warning = function(w) {
     return(w)
   }, error = function(e) {
