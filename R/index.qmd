@@ -1,0 +1,311 @@
+---
+title: "Simulating College Women's Basketball"
+subtitle: "A novel application of the Markov Chain stochastic model."
+author: "Harrison Cassel"
+date: "April 20, 2023"
+date-format: "MMMM DD, YYYY"
+toc: true
+format:
+  html:
+    theme: litera
+    fontsize: 12px
+code-overflow: wrap
+editor: visual
+---
+
+## Introduction
+
+There is a notable lack of sports analytics research into women's basketball (WBB), especially in the sub-field of stochastic models. Interestingly, I have been unable to find any examples of people applyingthe discrete Markov Chain model to NCAA DI Women's Basketball. For this reason, I have adopted a scaled-up version of this project as my undergraduate thesis topic and, correspondingly, created the following summary of my identified research gap (*Table 1*). This report will discuss the data collection/cleaning, transition matrix-building, and basic season simulation/diagnostics R programs ([GitHub](https://www.github.com/harrisoncassel/wbb-markov)) I have developed to conduct my research, as well as an early-stage case-study using my proposed model.
+
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| Search location                                         | Search query (or queries)             | \# of relevant results | Notes                                                                                                                                     |
++=========================================================+=======================================+========================+===========================================================================================================================================+
+| Google Scholar                                          | "ncaa womens basketball markov"       | 0                      | Located articles relevant to WBB but none applying Markov Chains.                                                                         |
+|                                                         |                                       |                        |                                                                                                                                           |
+|                                                         | "ncaa womens basketball monte carlo"  |                        | Returned *very few* (three or so) articles applying similar methods to men's basketball.                                                  |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| JSTOR                                                   | "ncaa womens basketball markov"       | 0                      | Oddly enough, the *second* result was titled "Monte Carlo Tennis."                                                                        |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| EBSCOhost                                               | "basketball" AND "markov" AND "women" | 0                      | Returned various news articles about the Olympic Games.                                                                                   |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| IOS Press Content Library                               | "ncaa womens basketball markov"       | 0                      | Similar to JSTOR, the second result discussed NCAA water polo performance analytics.                                                      |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| SIAM Publications Library                               | "ncaa womens basketball markov"       | 0                      | One result: the same tennis article returned by JTSOR.                                                                                    |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| De Gruyter                                              | "ncaa womens basketball markov"       | 0                      | Two results. The first applied this methodology to NCAA women's soccer. The second was another men's basketball article.                  |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+| The American Statistician (via Taylor & Francis Online) | "basketball markov"                   | 0                      | Only about four results, none of which use the word "women" in their abstracts. For this research, the articles are of dubious relevance. |
++---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
+
+: **Table 1.** *Literature review search results, by search location.*
+
+## Data Collection and Cleaning
+
+I opted to use the [wehoop](https://wehoop.sportsdataverse.org/) library from [sportsdataverse](https://sportsdataverse.org/), created by [Saiem Gilani](https://twitter.com/saiemgilani) and [Geoff Hutchinson](https://twitter.com/hutchngo). This library offers convenient access to ESPN's vast database of play-by-play data. Every game of the NCAA DI WBB season is attended by scorekeepers who record each "event" in the game in sequential order. Altogether, this forms a complete set of all possible outcomes in a game and, thus, an irreducible matrix.
+
+Besides the benefit of convenience, one of this library's best features is just *how clean* the data comes out. Wehoop includes a function to gather play-by-play data for every game in a given DI WBB season (e.g., 2022-23, 2021-22, etc.). It returns massive R data-frames ('22-'23, for example, is 500k+ rows) that would be difficult to manage all at once, but this seasonal design makes segmenting data management tasks natural and easy. Not using the built-in convenience would require an impressive CPU/RAM setup, which my poor laptop learned the hard way. Thus, my [*data_management.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/data_management.R) functions, generally speaking, aggregate and clean data iteratively over the season(s) of interest.
+
+The state-space necessitated by the event-types included in the ESPN data is certainly greatly simplified representation of basketball, but it still captures the overall movement of the game, along with select nuances that I expect will contribute to an interesting final analysis. My [*transition_matrix.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/transition_matrix.R) script includes a function to print the final state space:
+
+```{r}
+#| echo: false
+
+source("https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/transition_matrix.R")
+```
+
+```{r}
+# Hidden: use source() to load transition_matrix.R
+
+# Print state names and ID numbers
+print(states_dataframe())
+```
+
+The table above gives the proposed state space. **Team A** is the "team of interest." For example, in an analysis of the South Carolina Gamecocks, the Gamecocks would be "Team A," while their opponents would collectively be **Team B**. Another interpretation of this designation could be home/away, but such an analysis is outside of the scope of this report. It may be an area of future research, however, since studies of this and other sports have identified a significant "home team advantage" effect.
+
+These states were derived from the initial event types in the data, as follows:
+
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Original Event(s)                                                        | State Space Event                                                                                                                      |
++==========================================================================+========================================================================================================================================+
+| Made shot worth one point                                                | MadeFreeThrow                                                                                                                          |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Made shot worth two points                                               | TwoPoint                                                                                                                               |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Made shot worth three points                                             | ThreePoint                                                                                                                             |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Missed shot that *would have been* worth two or three points             | MissedShot - *Blocked shots are also recorded as missed shots, so recorded blocks have their corresponding missed shot event deleted*. |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Offensive rebound                                                        | Offensive Rebound                                                                                                                      |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Lost Ball Turnover                                                       | Lost Ball Turnover                                                                                                                     |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Jumpball, timeout                                                        | Inbound                                                                                                                                |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Personal/technical foul                                                  | Foul                                                                                                                                   |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Defensive rebound                                                        | Defensive Rebound                                                                                                                      |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| Block shot                                                               | Block Shot                                                                                                                             |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+| End of game/period, TV timeout, N/A, dead ball rebound, steal (turnover) | *Removed from data set*                                                                                                                |
++--------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------+
+
+: **Table 2.** *Creation of the state space.*
+
+## Building Transition Matrices
+
+I adopted an iterative process for generating Markov Chain models fitted to particular teams, seasons, and competitions. My *transition_matrix.R* function, *update_transition_matrix()*, takes the processed data-frame from *data_management.R*'s *team_games()* function. Then, it goes play-by-play through each game, making note of each state transition and returning a transition matrix of transition counts (*not* probabilities). This frequency-based approach allows for the iterative addition of game and/or season data to a given model. When all of the relevant counts are calculated, the data management function, *make_transition_probs()*, can be called to convert the frequencies to probabilities, thus creating a true Markov Chain, with row probabilities adding to one.
+
+I previously discussed the Team A/B labeling strategy adopted in the data cleaning phase to facilitate faster and more convenient data management. Of course, the simulated outcomes of specific games (i.e., between two specific teams) are of great interest to the sports analyst, making "comparison matrices" an integral aspect of this project. Thankfully, the A/B strategy has a lovely extension, here! Since a given team's model considers its team as *A* and every other team as *B*, creating a comparison matrix simply requires placing one team's transition probabilities in *section A* (states 1-10) of a new transition matrix, and another team's in *section B* (states 11-20). This can be accomplished using the *create_comparison_matrix()* function in *transition_matrix.R*.
+
+The process of fitting a Markov Chain model for the 2022-23 South Carolina Gamecock is presented below. This code returns the fitted transition matrix for South Carolina's 2022-23 season. Please note: *only 1/4 of the South Carolina matrix is shown, since the entire 20x20 matrix takes up an entire page.*
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Load data_management.R
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R')
+
+# Load a saved version of the 22-23 Gamecocks pbp to make rendering faster
+# Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
+gamecocks.pbp <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/gamecocks_23_pbp.rds")))
+trans.mat <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/trans_mat.rds")))
+```
+
+```{r}
+#| eval: false
+#| warning: false
+
+# Hidden: use source() to load data_management.R
+
+# Get the play-by-play data for the '22-'23 Gamecocks (ESPN team ID 2579)
+gamecocks.pbp <- team_games(team.id=2579, seasons=2023) # data_management.R
+
+# Create empty transition matrix, & update the counts
+trans.mat <- matrix(data=0, nrow=20, ncol=20)
+trans.mat <- update_transition_matrix(trans.mat, gamecocks.pbp) # transition_matrix.R
+
+# Convert trans.mat frequencies to probabilities, & print
+trans.mat <- make_transition_probs(trans.mat) # transition_matrix.R
+trans.mat <- round(trans.mat, 2) # <- to make more readable
+```
+
+```{r}
+print(trans.mat[1:10, 1:10])
+```
+
+## Running Simulations
+
+Having created the methods necessary to collect data and transform it into team-specific transitions matrices, the process of simulating individual games is relatively easy. Here, I again consider the most recent Gamecocks team and construct simulated season statistics to be compared to the ground truth team stat-line available on the team's website (see **Diagnostics**). Since this will be an *apples-to-apples* comparison, a simulated result that closely matches reality should indicate that this is an appropriately-designed model.
+
+*sim_season()* is a function in [*simulations.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/simulations.R) uses regular season data to fit transition matrices for a team of interest (the Gamecocks, in this case), as well as for all of the team's opponents. Then, using the "stacking" method of comparison matrix construction previously described, it simulates the team of interest's season, recording the stat line (states' occurrence counts) for each game.
+
+The mean number of state transitions per game is in the neighborhood of 300, and I found that *310 steps/game* produces the most consistently realistic results. The season is simulated 250 times because it saves time while still yielding meaningful results.
+
+```{r}
+#| echo: false
+
+# source simulations.R
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/simulations.R')
+
+# sim.results takes a very long time to calculate, so I saved some results to a .rds file to allow this .qmd to render quickly
+# Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
+sim.results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/sim_results.rds")))
+```
+
+```{r}
+#| eval: false
+
+# Hiddden: use source() to load simulations.R
+
+gamecocks.espn.id <- 2579
+sim.results <- sim_season(
+  team.a.id = gamecocks.espn.id,
+  year = 2023, # 22-23 season
+  n.steps.per.game = 310,
+  n.iter = 250
+)
+```
+
+```{r}
+summary(sim.results)
+```
+
+## Diagnostics
+
+How do these simulations compare to reality?
+
+[*Diagnostics.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/diagnostics.R) includes a function for returning *true* season box score (which shows various aggregate team statistics) for any given team. A good place to start in assessing this model's ability to "play" basketball is by comparing the average outcomes above to the 2022-23 Gamecocks' actual performance.
+
+```{r}
+#| echo: false
+
+# Load diagnostics.R
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/diagnostics.R')
+
+# Load true box to make rendering faster
+true.box <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/true_box.rds")))
+```
+
+```{r}
+#| eval: false
+
+# Hiddden: use source() to load diagnostics.R
+
+true.box <- get_true_team_box(2579, seasons=c(2023))
+```
+
+```{r}
+print(true.box)
+```
+
+It seems that the Markov Chain got at least somewhat close, but a more meaningful approach to assessing the accuracy of this model would be to look at the distribution of its errors. Below, I first use *eval_sim_accuracy()* from *diagnostics.R* to loop through each simulated season and record the squared distance of each variable from the truth (squared error). I then find what is effectively the coefficient of variation: $\frac{\sqrt{error^2}}{truth}$ for each variable of each simulation. Looking at the summary statistics for the collection of coefficients should offer good insight into the model's capability. Plots of the errors' distributions are available in the **Appendix**.
+
+```{r}
+results <- eval_sim_accuracy(sim.results[,1:20], true.box)
+sqrt.results <- sqrt(results)
+coeffs.var <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
+summary(coeffs.var)
+```
+
+Clearly, this model exhibits a strong ability to accurately simulate Gamecocks basketball for this most recent season! The "defensive" (Team B) predictions are impressively accurate. Accurancy is what we expected, and it confirms that this is an effective model for simulating the 2022-23 Gamecocks. The predictions match the reality on which it was trained.
+
+Below are the coefficient of variation results for another dominant team, the Iowa Hawkeyes, using a function that packages a few of the sections above into one. They are certainly satisfactory.
+
+```{r}
+#| echo: false
+
+# Load sq.err to make rendering faster
+coeffs.var2 <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/coeffs_var2.rds")))
+coeffs.var2 <- coeffs.var2[,1:20]
+names(coeffs.var2) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB',
+                         'A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block',
+                         'B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB',
+                         'B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block')
+```
+
+```{r}
+#| eval: false
+
+true.box <- get_true_team_box(2294, seasons=c(2023))
+sq.err <- test_chain_season_accuracy(2294, 2023, n.iter=250)
+sqrt.results <- sqrt(sq.err)
+coeffs.var2 <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
+```
+
+```{r}
+summary(coeffs.var2)
+```
+
+## A Brief Application
+
+This season, the Gamecocks had their dreams of back-to-back national championships crushed by an all-star performance from Caitlin Clark and her Iowa Hawkeyes. Even the odds-makers were shocked by this, having listed the Gamecocks as 11 points favorites (source: [CBS](https://www.cbssports.com/womens-college-basketball/news/south-carolina-vs-iowa-prediction-odds-line-time-2023-womens-final-four-picks-best-bets-by-top-experts/))! Using this model, I can estimate how unlikely (or, perhaps, likely) this upset was. More specifically, I can attempt to identify game statistics with unexpected values. These may be indicators of (un)successful players and strategies.
+
+By creating a "comparison matrix" with the *create_comparison_matrix()* function in *transition_matrix.R(),* I can simulate the matchup many times and ascertain *some idea* of how likely Iowa's win might have been. It is also worth noting that these models were trained using only regular season data, and there is nothing built-in to account for the various factors that may help or harm a team in the Final Four. The previous section did show the teams' respective models to be effective, however. This fact lends some validity to my results.
+
+```{r}
+#| echo: false
+
+# Get simulation results
+results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/comparison_results.rds")))
+
+# get results differences
+results.diff <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/comparison_diff.rds")))
+
+# get results coeffs of variation
+results.cv <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/main/R/helper_data/results_cv.rds")))
+```
+
+```{r}
+#| eval: false
+
+ia.pbp <- team_games(2294, seasons=2023)
+ia.trans.mat <- update_transition_matrix(matrix(data=0,nrow=20,ncol=20), ia.pbp)
+
+sc.ia <- create_comparison_matrix(trans.mat, ia.trans.mat)
+
+results <- multi_sim(sc.ia, n.games=500, n.steps=310)[[1]]
+names(results) <- c('A-FT', 'A-2pt', 'A-3pt', 'A-MissShot', 'A-OREB','A-TO', 'A-Inbound', 'A-Foul', 'A-DREB', 'A-Block','B-FT', 'B-2pt', 'B-3pt', 'B-MissShot', 'B-OREB','B-TO', 'B-Inbound', 'B-Foul', 'B-DREB', 'B-Block','A-Win')
+```
+
+```{r}
+summary(results)
+```
+
+```{r}
+#| eval: false
+
+actual.outcome <- get_true_team_box(2579, game.id=401528027, game.season=2023)
+results.means <- colMeans(results, na.rm=TRUE)
+results.diff <- actual.outcome - results.means[1:20]
+```
+
+```{r}
+print(results.diff)
+```
+
+```{r}
+#| eval: false
+
+results.cv <- results.diff[1:20] / actual.outcome
+```
+
+```{r}
+print(results.cv)
+```
+
+As before, I find the coefficient of variation-type metric to be the most helpful. Negative values indicate that the the real teams under-performed, relative to the model, and positive values, naturally, indicate a better performance than expected.
+
+This comparison suggests that the Hawkeyes were able to effectively shutdown the Gamecocks' 3-point shooting, while over-performing in terms of scoring. Even at the free-throw line, free of defenders, the Gamecocks struggled, scoring fewer points than expected. A look at the game's box score on ESPN confirms these hypotheses to an extent. At the end of the day, it seems like Iowa, propelled by Clark's historic [40-point triple-double](https://www.espn.com/womens-college-basketball/recap/_/gameId/401528027), simply found a way to control almost every aspect of South Carolina's game.
+
+## Appendix: Coefficients of Variation Plots
+
+```{r}
+par(mfrow=c(2,4))
+for (i in 1:20) {
+  current <- coeffs.var[,i]
+  current.name <- names(coeffs.var)[i]
+  hist(current, xlab='Coefficient of Variation', main=paste('Histogram of',current.name))
+}
+```
