@@ -15,7 +15,7 @@ editor: visual
 
 ## Introduction
 
-There is a notable lack of sports analytics research into women's basketball (WBB) in general, which is relatively unsurprising, given the novelty of advanced sports analytics and the historical inequity between the men's and women's renditions of the sport. Most interesting to me is the fact that *no one* in the relevant journals appears to have applied the discrete Markov Chain model to NCAA DI Women's Basketball. For this reason, I have adopted a scaled-up version of this project as my undergraduate thesis topic and, correspondingly, created the following summary of my identified research gap (*Table 1*). This report will discuss the data collection/cleaning, transition matrix-building, and basic season simulation/diagnostics R programs ([GitHub](https://www.github.com/harrisoncassel/wbb-markov)) I have developed to conduct my research, as well as an early-stage case-study using my proposed model.
+There is a notable lack of sports analytics research into women's basketball (WBB), especially in the subfield of stocharstic models. Interestingly, I have been unable to find any examples of people applyingthe discrete Markov Chain model to NCAA DI Women's Basketball. For this reason, I have adopted a scaled-up version of this project as my undergraduate thesis topic and, correspondingly, created the following summary of my identified research gap (*Table 1*). This report will discuss the data collection/cleaning, transition matrix-building, and basic season simulation/diagnostics R programs ([GitHub](https://www.github.com/harrisoncassel/wbb-markov)) I have developed to conduct my research, as well as an early-stage case-study using my proposed model.
 
 +---------------------------------------------------------+---------------------------------------+------------------------+-------------------------------------------------------------------------------------------------------------------------------------------+
 | Search location                                         | Search query (or queries)             | \# of relevant results | Notes                                                                                                                                     |
@@ -41,18 +41,19 @@ There is a notable lack of sports analytics research into women's basketball (WB
 
 ## Data Collection and Cleaning
 
-I opted to use the [wehoop](https://wehoop.sportsdataverse.org/) library from the [sportsdataverse](https://sportsdataverse.org/), created by [Saiem Gilani](https://twitter.com/saiemgilani) and [Geoff Hutchinson](https://twitter.com/hutchngo). This library offers convenient access to ESPN's vast database of play-by-play data. Besides the benefit of convenience, one of this library's best features is just *how clean* the data comes out. Wehoop includes a function to gather play-by-play data for every game in a given DI WBB season (e.g., 2022-23, 2021-22, etc.). It returns massive R data-frames ('22-'23, for example, is 500k+ rows) that would be difficult to manage all at once, but this seasonal design makes segmenting data management tasks natural and easy. Not using the built-in convenience would require an impressive CPU/RAM setup, which my poor laptop learned the hard way. Thus, my [*data_management.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/data_management.R) functions, generally speaking, aggregate and clean data iteratively over the season(s) of interest.
+I opted to use the [wehoop](https://wehoop.sportsdataverse.org/) library from [sportsdataverse](https://sportsdataverse.org/), created by [Saiem Gilani](https://twitter.com/saiemgilani) and [Geoff Hutchinson](https://twitter.com/hutchngo). This library offers convenient access to ESPN's vast database of play-by-play data. Besides the benefit of convenience, one of this library's best features is just *how clean* the data comes out. Wehoop includes a function to gather play-by-play data for every game in a given DI WBB season (e.g., 2022-23, 2021-22, etc.). It returns massive R data-frames ('22-'23, for example, is 500k+ rows) that would be difficult to manage all at once, but this seasonal design makes segmenting data management tasks natural and easy. Not using the built-in convenience would require an impressive CPU/RAM setup, which my poor laptop learned the hard way. Thus, my [*data_management.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/data_management.R) functions, generally speaking, aggregate and clean data iteratively over the season(s) of interest.
 
 My proposed state space represents a greatly-simplified version of basketball, but it still captures the overall movement of the game, along with select nuances that I expect will contribute to an interesting final analysis. My [*transition_matrix.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/transition_matrix.R) script includes a function to print the final state space:
 
 ```{r}
 #| echo: false
 
-source("https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/transition_matrix.R?token=GHSAT0AAAAAACAJ3F4DJGRZJANEN3TPWQJEZCB2E4Q")
+source("https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/transition_matrix.R")
 ```
 
 ```{r}
 # Hidden: use source() to load transition_matrix.R
+
 # Print state names and ID numbers
 print(states_dataframe())
 ```
@@ -102,12 +103,12 @@ The process of fitting a Markov Chain model for the 2022-23 South Carolina Gamec
 #| warning: false
 
 # Load data_management.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/data_management.R')
 
 # Load a saved version of the 22-23 Gamecocks pbp to make rendering faster
 # Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
-#gamecocks.pbp <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/blob/cab0596ca63af0582bd0135362bcda1f3205c793/R/helper_data/gamecocks_23_pbp.rds?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ")))
-#trans.mat <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/trans_mat.rds?token=GHSAT0AAAAAACAJ3F4CH2SAJVHB3TCN5PJAZCB2FOQ")))
+gamecocks.pbp <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/blob/cab0596ca63af0582bd0135362bcda1f3205c793/R/helper_data/gamecocks_23_pbp.rds")))
+trans.mat <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/trans_mat.rds")))
 ```
 
 ```{r}
@@ -136,19 +137,19 @@ print(trans.mat[1:10, 1:10])
 
 Having created the methods necessary to collect data and transform it into team-specific transitions matrices, the process of simulating individual games is relatively easy. Here, I again consider the most recent Gamecocks team and construct simulated season statistics to be compared to the ground truth team stat-line available on the team's website (see **Diagnostics**). Since this will be an *apples-to-apples* comparison, a simulated result that closely matches reality should indicate that this is an appropriately-designed model.
 
-*sim_season()* is a function in [*simulations.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/simulations.R) uses regular season data to fit transition matrices for a team of interest (the Gamecocks, in this case), as well as for all of the team's opponents. Then, using the "stacking" method of comparison matrix construction, it simulates the team of interest's season, recording the stat line (states' occurrence counts) for each game.
+*sim_season()* is a function in [*simulations.R*](https://github.com/harrisoncassel/wbb-markov/blob/main/R/simulations.R) uses regular season data to fit transition matrices for a team of interest (the Gamecocks, in this case), as well as for all of the team's opponents. Then, using the "stacking" method of comparison matrix construction previously described, it simulates the team of interest's season, recording the stat line (states' occurrence counts) for each game.
 
-The mean number of state transitions per game is in the neighborhood of 300, and I found that *310 steps/game* produces the most consistently realistic results. The season is simulated 250 times because the data downloading/cleaning requirements, as well as the large number of state transitions (310 steps \* \~31 games \* 250 iterations = 2.4M transitions).
+The mean number of state transitions per game is in the neighborhood of 300, and I found that *310 steps/game* produces the most consistently realistic results. The season is simulated 250 times because it saves time while still yielding meaningful results.
 
 ```{r}
 #| echo: false
 
 # source simulations.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/simulations.R?token=GHSAT0AAAAAACAJ3F4CC2G7557CGOPEDPWOZCB2MSA')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/simulations.R')
 
 # sim.results takes a very long time to calculate, so I saved some results to a .rds file to allow this .qmd to render quickly
 # Borrowing code from: https://community.rstudio.com/t/how-to-read-rds-files-hosted-at-github-repository/128561
-#sim.results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/sim_results.rds")))
+sim.results <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/sim_results.rds")))
 ```
 
 ```{r}
@@ -179,10 +180,10 @@ How do these simulations compare to reality?
 #| echo: false
 
 # Load diagnostics.R
-source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/diagnostics.R?token=GHSAT0AAAAAACAJ3F4CRI7F3B2MEB5QX3ACZCB2NEA')
+source('https://raw.githubusercontent.com/harrisoncassel/wbb-markov/main/R/diagnostics.R')
 
 # Load true box to make rendering faster
-#true.box <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/true_box.rds")))
+true.box <- readRDS(gzcon(url("https://github.com/harrisoncassel/wbb-markov/raw/simulations_section/R/helper_data/true_box.rds")))
 ```
 
 ```{r}
@@ -206,9 +207,9 @@ coeffs.var <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
 summary(coeffs.var)
 ```
 
-Clearly, this model exhibits a strong ability to accurately simulate Gamecocks basketball, at least in this most recent season! The "defensive" (Team B) predictions are impressively accurate. This is what we expected, and it confirms that this is an effective model for simulating the 2022-23 Gamecocks. Its predictions matched the reality on which it was trained.
+Clearly, this model exhibits a strong ability to accurately simulate Gamecocks basketball for this most recent season! The "defensive" (Team B) predictions are impressively accurate. Accurancy is what we expected, and it confirms that this is an effective model for simulating the 2022-23 Gamecocks. The predictions match the reality on which it was trained.
 
-Below are the coefficient of variation results for another dominant team, the Iowa Hawkeyes, using a function that packages a few of the sections above into one. They are certainly less impressive than those
+Below are the coefficient of variation results for another dominant team, the Iowa Hawkeyes, using a function that packages a few of the sections above into one. They are certainly satisfactory.
 
 ```{r}
 #| echo: false
@@ -225,7 +226,6 @@ true.box <- get_true_team_box(2294, seasons=c(2023))
 sq.err <- test_chain_season_accuracy(2294, 2023, n.iter=250)
 sqrt.results <- sqrt(sq.err)
 coeffs.var2 <- round(sqrt.results / c(true.box[1,], true.box[2,]), 2)
-saveRDS(coeffs.var2, 'coeffs_var2.rds')
 ```
 
 ```{r}
@@ -255,13 +255,6 @@ print(results.diff)
 
 results.cv <- results.diff[1:20] / actual.outcome
 print(results.cv)
-
-saveRDS(results.cv, 'results_cv.rds')
-
-saveRDS(results.diff, 'comparison_diff.rds')
-
-saveRDS(results, 'comparison_results.rds')
-
 ```
 
 As before, I find the coefficient of variation-type metric to be the most helpful. Negative values indicate that the the real teams under-performed, relative to the model, and positive values, naturally, indicate a better performance than expected.
